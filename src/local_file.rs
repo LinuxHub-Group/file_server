@@ -1,6 +1,6 @@
-use std::{os::windows::fs::MetadataExt, time::SystemTime};
-
 use chrono::Local;
+use std::time::SystemTime;
+use tokio::fs::DirEntry;
 
 #[derive(Debug)]
 pub enum FileType {
@@ -14,6 +14,16 @@ pub struct FileEntry {
     pub file_type: FileType,
     pub file_size: String,
     pub file_modified_time: String,
+}
+#[cfg(target_family = "unix")]
+async fn get_file_size(file: &DirEntry) -> u64 {
+    use std::os::unix::fs::MetadataExt;
+    file.metadata().await.unwrap().size()
+}
+#[cfg(target_family = "windows")]
+async fn get_file_size(file: &DirEntry) -> u64 {
+    use std::os::windows::fs::MetadataExt;
+    file.metadata().await.unwrap().file_size()
 }
 impl FileEntry {
     pub fn new(
@@ -51,7 +61,7 @@ impl FileEntry {
         let mut result = Vec::new();
         loop {
             if let Some(entry) = files.next_entry().await.unwrap() {
-                let file_size = entry.metadata().await.unwrap().file_size();
+                let file_size = get_file_size(&entry).await;
                 let file_type = if entry.metadata().await.unwrap().is_dir() {
                     FileType::Dir
                 } else {
