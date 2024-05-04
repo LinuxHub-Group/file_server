@@ -61,10 +61,11 @@ impl FileEntry {
         let mut result = Vec::new();
         loop {
             if let Some(entry) = files.next_entry().await.unwrap() {
-                let file_size = get_file_size(&entry).await;
+                let mut file_size = 0;
                 let file_type = if entry.metadata().await.unwrap().is_dir() {
                     FileType::Dir
                 } else {
+                    file_size = get_file_size(&entry).await;
                     FileType::File
                 };
                 // append slash to file name to indicate this is a dir.
