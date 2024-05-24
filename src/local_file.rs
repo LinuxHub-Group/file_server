@@ -1,5 +1,5 @@
 use chrono::Local;
-use std::time::SystemTime;
+use std::{path::PathBuf, time::SystemTime};
 use tokio::fs::DirEntry;
 
 #[derive(Debug)]
@@ -9,7 +9,7 @@ pub enum FileType {
 }
 #[derive(Debug)]
 pub struct FileEntry {
-    pub path: String,
+    pub path: PathBuf,
     pub file_name: String,
     pub file_type: FileType,
     pub file_size: String,
@@ -27,7 +27,7 @@ async fn get_file_size(file: &DirEntry) -> u64 {
 }
 impl FileEntry {
     pub fn new(
-        path: String,
+        path: PathBuf,
         file_name: String,
         file_type: FileType,
         file_size: u64,
@@ -56,7 +56,7 @@ impl FileEntry {
             file_modified_time: datetime.format("%Y-%m-%d %H:%M:%S").to_string(),
         }
     }
-    pub async fn get_files(path: &String) -> Vec<Self> {
+    pub async fn get_files(path: &PathBuf) -> Vec<Self> {
         let mut files = tokio::fs::read_dir(&path).await.unwrap();
         let mut result = Vec::new();
         loop {
@@ -74,10 +74,13 @@ impl FileEntry {
                     FileType::File => entry.file_name().into_string().unwrap(),
                 };
                 // concat origin path and file name to structure a new path.
-                let path = format!("{}{}", path, file_name);
+                let mut new_path = PathBuf::new();
+                new_path.push(path);
+                new_path.push(&file_name);
+                //let path = format!("{:?}{}", path, file_name);
                 let file_modified_time = entry.metadata().await.unwrap().modified().unwrap();
                 result.push(FileEntry::new(
-                    path,
+                    new_path,
                     file_name,
                     file_type,
                     file_size,

@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::local_file::FileEntry;
 
 pub fn gen_page(file_list: Vec<FileEntry>) -> String {
